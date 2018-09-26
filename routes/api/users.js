@@ -9,19 +9,21 @@ const passport = require("passport");
 //load user model
 const User = require("../../models/User");
 
-// @route GET api/users/test
-// @desc Test user routes
-// @access Public
+// @route   GET api/users/test
+// @desc    Test user routes
+// @access  Public
 router.get("/test", (req, res) => res.json({ message: "test for user" }));
 
-// @route POST api/users/register
-// @desc Register a user
-// @access Public
+// @route   POST api/users/register
+// @desc    Register a user
+// @access  Public
 router.post("/register", (req, res) => {
   User.findOne({ email: req.body.email }).then(user => {
     if (user) {
+      //returns true if user already registered
       return res.status(400).json({ email: "Email already registered" });
     } else {
+      //create new user if not already existing
       //use gravatar for avatar data
       const avatar = gravatar.url(req.body.email, {
         s: "200", //avatar size
@@ -34,7 +36,7 @@ router.post("/register", (req, res) => {
         avatar: avatar,
         password: req.body.password
       });
-
+      //generate salted password for security
       bcrypt.genSalt(10, (err, salt) => {
         bcrypt.hash(newUser.password, salt, (err, hash) => {
           if (err) throw err;
@@ -49,9 +51,9 @@ router.post("/register", (req, res) => {
   });
 });
 
-// @route POST api/users/login
-// @desc Login user / returning JWT
-// @access Public
+// @route   POST api/users/login
+// @desc    Login user / returning JWT
+// @access  Public
 router.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -72,7 +74,7 @@ router.post("/login", (req, res) => {
         jwt.sign(
           payload,
           keys.secretOrKey,
-          { expiresIn: 3600 },
+          { expiresIn: 3600 }, //expiration of token after 1 hour
           (err, token) => {
             res.json({
               success: true,
@@ -87,13 +89,14 @@ router.post("/login", (req, res) => {
   });
 });
 
-// @route GET api/users/current
-// @desc Return current user
-// @access Private
+// @route   GET api/users/current
+// @desc    Return current user
+// @access  Private
 router.get(
   "/current",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
+    // return authenticated user's id/name/email
     res.json({ id: req.user.id, name: req.user.name, email: req.user.email });
   }
 );
